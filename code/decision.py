@@ -1,19 +1,55 @@
 import numpy as np
 
 
-# This is where you can build a decision tree for determining throttle, brake and steer 
-# commands based on the output of the perception_step() function
 def decision_step(Rover):
+    """This is where you can build a decision tree for determining throttle, brake and steer
+    commands based on the output of the perception_step() function
 
+    :param Rover:
+    :return:
+    """
     # Implement conditionals to decide what to do given perception data
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
-
     # Example:
     # Check if we have vision data to make decisions with
     if Rover.nav_angles is not None:
+        if Rover.mode == "stuck":
+            print(f"looks like we are stuck, trying: {Rover.evasion_mode}")
+            if Rover.mode == 'stuck':
+                if Rover.evasion_mode == 'forward':
+                    Rover.throttle = 1
+                    # Rover.steer = 0
+                    Rover.stuck_counter += 1
+                    if Rover.stuck_counter > 50:
+                        Rover.evasion_mode = 'yaw'
+                        Rover.stuck_counter = 0
+                elif Rover.evasion_mode == 'yaw':
+                    Rover.throttle = 0
+                    Rover.steer = -15
+                    Rover.stuck_counter += 1
+                    if Rover.stuck_counter > 20:
+                        Rover.evasion_mode = 'forward'
+                        Rover.stuck_counter = 0
+
+                if Rover.vel > 0.6:
+                    Rover.mode = 'forward'
+                return Rover  # Early return
+
         # Check for Rover.mode status
-        if Rover.mode == 'forward': 
+        if Rover.mode == 'forward':
+            if Rover.vel < 0.5:
+                Rover.stuck_counter += 1
+        else:
+            Rover.stuck_counter = 0
+
+        if Rover.stuck_counter > 90:
+            Rover.mode = 'stuck'
+            Rover.evasion_mode = 'forward'
+            Rover.stuck_counter = 0
+
+        # Check for Rover.mode status
+        if Rover.mode == 'forward':
             # Check the extent of navigable terrain
             if len(Rover.nav_angles) >= Rover.stop_forward:  
                 # If mode is forward, navigable terrain looks good 
