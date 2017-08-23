@@ -1,9 +1,14 @@
 import numpy as np
 
 
-# This is where you can build a decision tree for determining throttle, brake and steer 
-# commands based on the output of the perception_step() function
 def decision_step(Rover):
+    """This is where you can build a decision tree
+    for determining throttle, brake and steer
+    commands based on the output of the perception_step() function
+
+    :param Rover:
+    :return:
+    """
 
     # Implement conditionals to decide what to do given perception data
     # Here you're all set up with some basic functionality but you'll need to
@@ -21,7 +26,7 @@ def decision_step(Rover):
                 if Rover.vel < Rover.max_vel:
                     # Set throttle value to throttle setting
                     Rover.throttle = Rover.throttle_set
-                else: # Else coast
+                else:  # Else coast
                     Rover.throttle = 0
                 Rover.brake = 0
                 # Set steering to average angle clipped to the range +/- 15
