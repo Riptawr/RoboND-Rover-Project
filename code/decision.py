@@ -1,6 +1,33 @@
 import numpy as np
 
 
+def get_unstuck(Rover):
+    """Try to alterate between turning right and going forward until unstuck
+    Will switch to forward mode once done
+    :param Rover:
+    :return:
+    """
+    print(f"looks like we are stuck, trying: {Rover.evasion_mode}\nStuck counter {Rover.stuck_counter}")
+    if Rover.evasion_mode == 'forward':
+        Rover.throttle = 1
+        # Rover.steer = 0
+        Rover.stuck_counter += 1
+        if Rover.stuck_counter > 50:
+            Rover.evasion_mode = 'yaw'
+            Rover.stuck_counter = 0
+    elif Rover.evasion_mode == 'yaw':
+        Rover.throttle = 0
+        Rover.steer = -15
+        Rover.stuck_counter += 1
+        if Rover.stuck_counter > 30:
+            Rover.evasion_mode = 'forward'
+            Rover.stuck_counter = 0
+
+    if Rover.vel > 0.6:
+        Rover.mode = 'forward'
+    return Rover
+
+
 def decision_step(Rover):
     """This is where you can build a decision tree for determining throttle, brake and steer
     commands based on the output of the perception_step() function
@@ -15,33 +42,13 @@ def decision_step(Rover):
     # Check if we have vision data to make decisions with
     if Rover.nav_angles is not None:
         if Rover.mode == "stuck":
-            print(f"looks like we are stuck, trying: {Rover.evasion_mode}")
-            if Rover.mode == 'stuck':
-                if Rover.evasion_mode == 'forward':
-                    Rover.throttle = 1
-                    # Rover.steer = 0
-                    Rover.stuck_counter += 1
-                    if Rover.stuck_counter > 50:
-                        Rover.evasion_mode = 'yaw'
-                        Rover.stuck_counter = 0
-                elif Rover.evasion_mode == 'yaw':
-                    Rover.throttle = 0
-                    Rover.steer = -15
-                    Rover.stuck_counter += 1
-                    if Rover.stuck_counter > 20:
-                        Rover.evasion_mode = 'forward'
-                        Rover.stuck_counter = 0
+            get_unstuck(Rover)
 
-                if Rover.vel > 0.6:
-                    Rover.mode = 'forward'
-                return Rover  # Early return
-
-        # Check for Rover.mode status
         if Rover.mode == 'forward':
             if Rover.vel < 0.5:
                 Rover.stuck_counter += 1
-        else:
-            Rover.stuck_counter = 0
+            else:
+                Rover.stuck_counter = 0
 
         if Rover.stuck_counter > 90:
             Rover.mode = 'stuck'
