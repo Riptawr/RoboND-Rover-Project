@@ -178,12 +178,12 @@ def perception_step(Rover):
         if ch == 2:
             Rover.worldmap[y,x,0] -= 255
         if ch == 0:
-            Rover.worldmap[y,x,2] -= 1
+            Rover.worldmap[y,x,2] -= 100
 
     # Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
     # Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
     # Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-    if (Rover.roll < 0.9 or Rover.roll > 359.1) or (Rover.pitch < 0.9 or Rover.pitch > 359.1):
+    if (Rover.roll < 0.5 or Rover.roll > 359.5) or (Rover.pitch < 0.5 or Rover.pitch > 359.5):
         update_map(obstacle_y_world, obstacle_x_world, 0)
         update_map(navigable_y_world, navigable_x_world, 2)
         update_map(rock_y_world, rock_x_world, 1)
