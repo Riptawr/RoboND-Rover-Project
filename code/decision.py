@@ -28,6 +28,14 @@ def get_unstuck(Rover):
     return Rover
 
 
+def get_unlooped(Rover):
+    if Rover.steer > 0:
+        Rover.steer = -15
+    else:
+        Rover.steer = 15
+    Rover.mode = "forward"
+
+
 def decision_step(Rover):
     """This is where you can build a decision tree for determining throttle, brake and steer
     commands based on the output of the perception_step() function
@@ -44,11 +52,24 @@ def decision_step(Rover):
         if Rover.mode == "stuck":
             get_unstuck(Rover)
 
+        if Rover.mode == "looping":
+            get_unlooped(Rover)
+
         if Rover.mode == 'forward':
             if Rover.vel < 0.5:
                 Rover.stuck_counter += 1
             else:
                 Rover.stuck_counter = 0
+
+            # If we are at a decent speed, but did not move more than 5 meters over the last 400 percepts:
+            if Rover.vel > 1.5:
+                if len(Rover.last_known_positions) > 2:
+                    pos_hist = Rover.last_known_positions
+                    dist_travelled = np.linalg.norm(np.array(pos_hist[0]) - np.array(pos_hist[-1]))
+                    # prevent check on start, when we do not have a dist history
+                    if dist_travelled < 5.0:
+                        print(f"looks like we are not going anywhere, dist travelled {dist_travelled}")
+                        Rover.mode = "looping"
 
         if Rover.stuck_counter > 90:
             Rover.mode = 'stuck'
