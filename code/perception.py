@@ -128,6 +128,16 @@ def perception_step(Rover):
     :param Rover:
     :return:
     """
+    Rover.percept_count += 1
+    # Note our position from time to time for loop detection
+    if Rover.percept_count % 10 == 0:
+        Rover.last_known_positions.append(Rover.pos)
+
+    if Rover.percept_count % 40 == 0:
+        first = Rover.last_known_positions[-2]
+        last = Rover.last_known_positions[-1]
+        print(f"Distance travelled over last 40 percepts: {np.linalg.norm(np.array(last)-np.array(first))}")
+
     # TODO: 
     # NOTE: camera image is coming to you in Rover.img
     # 1) Define source and destination points for perspective transform
