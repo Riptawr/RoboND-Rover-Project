@@ -2,6 +2,7 @@
 import argparse
 import shutil
 import base64
+from collections import deque
 from datetime import datetime
 import os
 import cv2
@@ -80,6 +81,8 @@ class RoverState():
         # Additional fields for stuck detection
         self.stuck_counter = 0
         self.evasion_mode = None
+        self.last_known_positions = deque(maxlen=20)
+        self.percept_count = 0
 
 # Initialize our rover 
 Rover = RoverState()
