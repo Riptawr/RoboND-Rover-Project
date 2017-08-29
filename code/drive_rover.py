@@ -95,9 +95,14 @@ second_counter = time.time()
 fps = None
 
 
-# Define telemetry function for what to do with incoming data
 @sio.on('telemetry')
 def telemetry(sid, data):
+    """
+    Define telemetry function for what to do with incoming data
+    :param sid:
+    :param data:
+    :return:
+    """
 
     global frame_counter, second_counter, fps
     frame_counter+=1
@@ -155,6 +160,7 @@ def telemetry(sid, data):
     else:
         sio.emit('manual', data={}, skip_sid=True)
 
+
 @sio.on('connect')
 def connect(sid, environ):
     print("connect ", sid)
@@ -164,6 +170,7 @@ def connect(sid, environ):
         "get_samples",
         sample_data,
         skip_sid=True)
+
 
 def send_control(commands, image_string1, image_string2):
     # Define commands to be sent to the rover
@@ -180,8 +187,13 @@ def send_control(commands, image_string1, image_string2):
         data,
         skip_sid=True)
     eventlet.sleep(0)
-# Define a function to send the "pickup" command 
+
+
 def send_pickup():
+    """
+    Define a function to send the "pickup" command
+    :return:
+    """
     print("Picking up")
     pickup = {}
     sio.emit(
