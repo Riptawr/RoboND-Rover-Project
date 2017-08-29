@@ -218,7 +218,7 @@ if __name__ == '__main__':
         if not os.path.exists(args.image_folder):
             os.makedirs(args.image_folder)
         else:
-            shutil.rmtree(args.image_folder)
+            #shutil.rmtree(args.image_folder)
             os.makedirs(args.image_folder)
         print("Recording this run ...")
     else:
