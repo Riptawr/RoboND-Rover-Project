@@ -41,7 +41,7 @@ You're reading it!
 ### Notebook Analysis
 #### 1. Run the functions provided in the notebook on test images (first with the test data provided, next on data you have recorded). Add/modify functions to allow for color selection of obstacles and rock samples.
 
-To allow adding different objects to be added to the map, i added a RGB range upper limit to the color_thresh function
+To allow adding different objects to be added to the map, a RGB range upper limit was added to the color_thresh function
  and added it to the truth check:
 ```python
 def color_thresh(img, rgb_thresh_min=(160, 160, 160), rgb_thresh_max=(255, 255, 255)):
