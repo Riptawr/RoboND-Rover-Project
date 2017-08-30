@@ -130,13 +130,13 @@ def perception_step(Rover):
     """
     Rover.percept_count += 1
     # Note our position from time to time for loop detection
-    if Rover.percept_count % 10 == 0:
+    if Rover.percept_count % 30 == 0:
         Rover.last_known_positions.append(Rover.pos)
 
-    if Rover.percept_count % 40 == 0:
+    if Rover.percept_count % 30 == 0:
         first = Rover.last_known_positions[-2]
         last = Rover.last_known_positions[-1]
-        print(f"Distance travelled over last 40 percepts: {np.linalg.norm(np.array(last)-np.array(first))}")
+        print("Distance travelled over last 30 percepts (~1s): {0}".format(np.linalg.norm(np.array(last)-np.array(first))))
 
     # TODO: 
     # NOTE: camera image is coming to you in Rover.img
@@ -193,7 +193,7 @@ def perception_step(Rover):
     # Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
     # Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
     # Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-    if (Rover.roll < 0.4 or Rover.roll > 359.6) or (Rover.pitch < 0.4 or Rover.pitch > 359.6):
+    if (Rover.roll < 0.5 or Rover.roll > 359.5) or (Rover.pitch < 0.5 or Rover.pitch > 359.5):
         update_map(obstacle_y_world, obstacle_x_world, 0)
         update_map(navigable_y_world, navigable_x_world, 2)
         update_map(rock_y_world, rock_x_world, 1)

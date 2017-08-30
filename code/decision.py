@@ -31,8 +31,10 @@ def get_unstuck(Rover):
 def get_unlooped(Rover):
     if Rover.steer > 0:
         Rover.steer = -15
+        Rover.throttle = 0
     else:
         Rover.steer = 15
+        Rover.throttle = 0
     Rover.mode = "forward"
 
 
@@ -61,14 +63,14 @@ def decision_step(Rover):
             else:
                 Rover.stuck_counter = 0
 
-            # If we are at a decent speed, but did not move more than 5 meters over the last 400 percepts:
-            if Rover.vel > 1.5:
-                if len(Rover.last_known_positions) > 2:
+            # If we are at a decent speed, but did not move very far over the last ~10 seconds
+            if Rover.vel > 1.7:
+                # Prevent from triggering before we have some positions
+                if len(Rover.last_known_positions) > 4:
                     pos_hist = Rover.last_known_positions
                     dist_travelled = np.linalg.norm(np.array(pos_hist[0]) - np.array(pos_hist[-1]))
-                    # prevent check on start, when we do not have a dist history
-                    if dist_travelled < 5.0:
-                        print(f"looks like we are not going anywhere, dist travelled {dist_travelled}")
+                    if dist_travelled < 8.0:
+                        print("! Possible loop, travelled no more than {0} over {1} percepts !".format(dist_travelled, 30*10))
                         Rover.mode = "looping"
 
         if Rover.stuck_counter > 90:

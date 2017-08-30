@@ -81,7 +81,7 @@ class RoverState():
         # Additional fields for stuck detection
         self.stuck_counter = 0
         self.evasion_mode = None
-        self.last_known_positions = deque(maxlen=20)
+        self.last_known_positions = deque(maxlen=10)
         self.percept_count = 0
 
 # Initialize our rover 
