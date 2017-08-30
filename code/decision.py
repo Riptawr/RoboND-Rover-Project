@@ -7,7 +7,7 @@ def get_unstuck(Rover):
     :param Rover:
     :return:
     """
-    print(f"looks like we are stuck, trying: {Rover.evasion_mode}\nStuck counter {Rover.stuck_counter}")
+    # print(f"looks like we are stuck, trying: {Rover.evasion_mode}\nStuck counter {Rover.stuck_counter}")
     if Rover.evasion_mode == 'forward':
         Rover.throttle = 1
         # Rover.steer = 0
