@@ -134,9 +134,9 @@ def perception_step(Rover):
         Rover.last_known_positions.append(Rover.pos)
 
     if Rover.percept_count % 30 == 0:
-        first = Rover.last_known_positions[-2]
+        first = Rover.last_known_positions[0]
         last = Rover.last_known_positions[-1]
-        print("Distance travelled over last 30 percepts (~1s): {0}".format(np.linalg.norm(np.array(last)-np.array(first))))
+        print("Distance travelled over last 300 percepts (~10s): {0}".format(np.linalg.norm(np.array(last)-np.array(first))))
 
     # TODO: 
     # NOTE: camera image is coming to you in Rover.img
