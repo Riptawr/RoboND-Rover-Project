@@ -27,6 +27,7 @@
 [image3]: ./calibration_images/example_rock1.jpg
 [thresh-1]: ./writeup-misc/writeup-tresh-1.png
 [warped]: ./writeup-misc/warped.png
+[auto-1]: ./writeup-misc/auto-1.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/916/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -149,17 +150,131 @@ A sample recording is available [here](https://youtu.be/HaZc5Ri0ULM)
 
 ### Autonomous Navigation and Mapping
 
-#### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and an explanation is provided in the writeup of how and why these functions were modified as they were.
+#### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and add an explanation of how and why these functions were modified as they were.
 
+The `perception_step()` follows similar logic as the prototype in the notebook with one difference in the process of updating the map, which now tries to
+reduce values for overlapping terrain/obstacle borders with a bias towards obstacles.
+```python
+    # 7) Update Rover worldmap (to be displayed on right side of screen)
+    def update_map(y,x,ch):
+        Rover.worldmap[y,x,ch] += 255
+        if ch == 2:
+            Rover.worldmap[y,x,0] -= 255
+        if ch == 0:
+            Rover.worldmap[y,x,2] -= 100
+```
+
+A percept-counter was introduced, which is used to periodically append the Rover's position to last known positions -
+    a Python [deque](https://docs.python.org/3/library/collections.html#collections.deque),
+    optimized for appending and removing to and from the head and tail of the queue in constant time.
+    The percept-counter allows for efficient, time-delayed logic to be built on top of percepts,
+     since we are running in an endless loop and would need to persist data otherwise.
+     30 percepts took approx. 1 second on a Ryzen 7 @ 3.8Ghz
+
+```python
+    Rover.percept_count += 1
+    # Note our position from time to time for loop detection
+    if Rover.percept_count % 30 == 0:
+        Rover.last_known_positions.append(Rover.pos)
+
+    if Rover.percept_count % 30 == 0:
+        first = Rover.last_known_positions[0]
+        last = Rover.last_known_positions[-1]
+        print("Distance travelled over last 30 percepts (~1s): {0}".format(np.linalg.norm(np.array(last)-np.array(first))))
+```
+
+Additional fields to the Rover class, in `drive_rover.py`, were needed to to allow making decisions based on being stuck or looping in place:
+```python
+        # Additional fields for stuck detection
+        self.stuck_counter = 0
+        self.evasion_mode = None
+        self.last_known_positions = deque(maxlen=20)
+        self.percept_count = 0
+```
+
+Based on additional fields, the decision logic got new modes for the rover and sets them when certain counters exceed their threshold:
+- if we are travelling extended periods in `forward` mode, but our speed is very low -> probably stuck
+- if the speed is high, but total distance travelled (as per euclidean / l2 norm) is not very large -> probably looping
+```python
+    if Rover.nav_angles is not None:
+        if Rover.mode == "stuck":
+            get_unstuck(Rover)
+
+        if Rover.mode == "looping":
+            get_unlooped(Rover)
+
+        if Rover.mode == 'forward':
+            if Rover.vel < 0.5:
+                Rover.stuck_counter += 1
+            else:
+                Rover.stuck_counter = 0
+
+            # If we are at a decent speed, but did not move very far over the last ~10 seconds
+            if Rover.vel > 1.7:
+                # Prevent from triggering before we have some positions
+                if len(Rover.last_known_positions) > 4:
+                    pos_hist = Rover.last_known_positions
+                    dist_travelled = np.linalg.norm(np.array(pos_hist[0]) - np.array(pos_hist[-1]))
+                    if dist_travelled < 8.0:
+                        print(f"! Possible loop, travelled no more than {dist_travelled} over {30*10} percepts !")
+                        Rover.mode = "looping"
+
+        if Rover.stuck_counter > 90:
+            Rover.mode = 'stuck'
+            Rover.evasion_mode = 'forward'
+            Rover.stuck_counter = 0
+```
+
+Different functions are used to get unstuck and un-looped (see `decision.py`), but they basically boil
+ down to introducing corrections to the direction we are travelling in and resetting their counters / modes when done.
 
 #### 2. Launching in autonomous mode your rover can navigate and map autonomously.  Explain your results and how you might improve them in your writeup.  
 
 **Note: running the simulator with different choices of resolution and graphics quality may produce different results, particularly on different machines!  Make a note of your simulator settings (resolution and graphics quality set on launch) and frames per second (FPS output to terminal by `drive_rover.py`) in your writeup when you submit the project so your reviewer can reproduce your results.**
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+The simulator settings were `1280x1024 / Fantastic` during the tests and lead to a above 76% fidelity with ~85% of terrain,
+ and 5-6 rocks located in under 300 seconds.
+Time needed for mapping varies, based on the map and whether we get stuck or loop often and the current logic
+ does not make intelligent decisions on where to go, therefore exploring 100% of the map is not guaranteed.
 
+![Results of a common testrun in 300 seconds][auto-1]
 
+#### The main challenges of the current logic can be summarized as follows:
 
-![alt text][image3]
+1. perception overly affected by roll/pitch and serves as an upper bound for mapping fidelity.
 
+To avoid this issue, we would need to come up with equations for the destination of the image transform,
+ which account for roll/pitch instead of using hardcoded destinations, based on an even picture
+
+2. relying on only the front camera and colors to detect objects may fail in different lightning conditions. The rover arm's own shadow consistently appears in the mapping and is detected as an obstacle.
+
+We would need additional sensors, e.g. infra-red cameras or a mapping via lidar etc. to overlay on top of the front camera, to make the detection more robust
+
+3. Averaging visible terrain to decide on direction leads to more steering corrections on higher speed, which results in higher roll/pitch (increasing issue 1.)
+
+Additional logic to modify the crop angle and brake distance, dynamically, based on speed may help with this issue.
+One way would be mounting a range-finder and using it as an assistance to determine whether corrections are needed or not, and making them earlier,
+since camera mount height and range are limited.
+
+4. Lack of intelligent navigation / prone to re-visiting known areas.
+
+While re-visiting areas may be useful to map from a different angle, especially on uneven terrain, or when searching hidden rocks,
+more intelligent direction choice could be introduced via comparing mapped terrain with ground truth and getting unexplored areas.
+The decision making could then be biased towards this direction on each step, when a driving decision is made.
+
+Currently the decision step is based only on navigable terrain:
+```python
+# Set steering to average angle clipped to the range +/- 15
+Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
+```
+
+An improvement could be made by adding a naive heuristic, `H` - calculated as the ideal direction - as follows:
+```python
+H: Union[small_left_correction, small_right_correction] = get_heading_towards_unexplored()
+
+# Set steering to average angle clipped to the range +/- 15
+Rover.steer = np.clip(np.mean((Rover.nav_angles + H) * 180/np.pi), -15, 15)
+```
+Or, alternatively, removing it from the correct side of the clip limit.
+As a result the direction will be biased towards new terrain, given the mapping is accurate.
 
