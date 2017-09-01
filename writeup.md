@@ -239,6 +239,8 @@ Time needed for mapping varies, based on the map and whether we get stuck or loo
 
 ![Results of a common testrun in 300 seconds][auto-1]
 
+A full video is available [here](https://youtu.be/yYDN1t0wVpI)
+
 #### The main challenges of the current logic can be summarized as follows:
 
 1. perception overly affected by roll/pitch and serves as an upper bound for mapping fidelity.
